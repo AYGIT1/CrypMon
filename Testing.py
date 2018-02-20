@@ -33,7 +33,7 @@ def DataPull():
 #def DataRefine():
 
 
-class AppMain(QWidget):
+class AppMain(QMainWindow):
 
     def __init__(self):
         super().__init__()
@@ -42,7 +42,21 @@ class AppMain(QWidget):
 
     def initUI(self):
 
+        self.statusBar().showMessage('Ready')
 
+        self.setGeometry(300, 300, 600, 400)
+        self.setWindowTitle('QComboBox')
+        self.show()
+
+
+class Labeling(QWidget):
+
+    def __init__(self):
+        super().__init__()
+
+        self.initBoard()
+
+    def initBoard(self):
         ####### Base Currency Menu #######
         self.BasLbl = QLabel("Select a base currency", self)
         BaseCombo = QComboBox(self)
@@ -63,9 +77,7 @@ class AppMain(QWidget):
         MarketCombo.move(180, 50)
         # MarketCombo.activated[str].connect(self.onActivated)
 
-        self.setGeometry(300, 300, 600, 400)
-        self.setWindowTitle('QComboBox')
-        self.show()
+
 
     #  def onActivated(self, text):
     #     self.BasLbl.setText(text)

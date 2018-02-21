@@ -10,27 +10,35 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QLabel, QComboBox, QApplicati
 
 BaseCurrSet = set()
 MarketCurrSet = set()
-#DataTup = ()
 #TODO: Do not use global variables
 
-def DataPull():
+def data_pull():
     try:
-        DataRaw = requests.get("https://bittrex.com/api/v1.1/public/getmarkets")
+        data_raw = requests.get("https://bittrex.com/api/v1.1/public/getmarkets")
     except:
         print("Connection to the server could not be established.")
 
 
-    for Shovel in DataRaw.json()["result"]:
+    for Shovel in data_raw.json()["result"]:
         BaseCurrSet.add(Shovel["BaseCurrency"])
         MarketCurrSet.add(Shovel["MarketCurrency"])
 
-    # DataTup = BaseCurrSet, MarketCurrSet
-    # print(DataTup)
-    # for Code in DataTup[0]:
-    #     print(type(Code))
-    #     print(Code)
+def data_refine():
 
-#def DataRefine():
+    #Base = Get string from self.BasLbl
+    #Market = Get string from self.MarLbl
+    #exchange = "Base" + "Market"
+
+    try:
+        data_marketsum = requests.get("https://bittrex.com/api/v1.1/public/getmarketsummaries")
+    except:
+        print("Connection to the server could not be established.")
+
+    for Bucket in data_marketsum.json()["result"]:
+        if Bucket['MarketName'] == exchange:
+            rates = [int(Bucket['High'), int(Bucket['Low']), int(Bucket['Last']),]
+            
+    return rates
 
 
 class AppMain(QWidget):
@@ -75,7 +83,7 @@ class AppMain(QWidget):
 
 
 if __name__ == '__main__':
-    DataPull()
+    data_pull()
     app = QApplication(sys.argv)
     ex = AppMain()
     sys.exit(app.exec_())

@@ -7,8 +7,12 @@ import sys
 import requests
 from PyQt5.QtWidgets import (QWidget, QLabel, QComboBox, QApplication, QPushButton, QMessageBox)
 
-BaseCurrSet = set()
-MarketCurrSet = set()
+base_curr_set = set()
+market_curr_set = set()
+base = "-"
+market = "-"
+last_val = 1.00000
+
 # TODO: Do not use global variables
 
 def data_pull():
@@ -18,9 +22,17 @@ def data_pull():
         print("Connection to the server could not be established.")
 
     for Shovel in data_raw.json()["result"]:
-        BaseCurrSet.add(Shovel["BaseCurrency"])
-        MarketCurrSet.add(Shovel["MarketCurrency"])
+        base_curr_set.add(Shovel["BaseCurrency"])
+        market_curr_set.add(Shovel["MarketCurrency"])
 
+def last_val_finder():
+    values = requests.get("https://bittrex.com/api/v1.1/public/getmarketsummaries")
+    for data_Markets in values.json()["result"]:
+        if data_Markets['MarketName'] == base + "-" + market:
+            print(base + "-" + market)
+            print(data_Markets["Last"])
+            global last_val
+            last_val = float(data_Markets["Last"])
 
 class AppMain(QWidget):
 
@@ -34,7 +46,7 @@ class AppMain(QWidget):
         self.BasLbl = QLabel("Select a base currency", self)
         self.BaseCombo = QComboBox(self)
         self.BaseCombo.addItem("-")
-        for Code in BaseCurrSet:
+        for Code in base_curr_set:
             self.BaseCombo.addItem(Code)
         self.BasLbl.move(40, 25)
         self.BaseCombo.move(40, 50)
@@ -44,29 +56,39 @@ class AppMain(QWidget):
         self.MarLbl = QLabel("Select a market currency", self)
         self.MarketCombo = QComboBox(self)
         self.MarketCombo.addItem("-")
-        for Code in MarketCurrSet:  # TODO: Bad UX, should be in alphabetical order
+        for Code in market_curr_set:  # TODO: Bad UX, should be in alphabetical order
             self.MarketCombo.addItem(Code)
         self.MarLbl.move(180, 25)
         self.MarketCombo.move(180, 50)
         self.MarketCombo.currentTextChanged.connect(self.market_change_name)
 
-        # self.btn = QPushButton('Button', self)
-        # self.btn.resize(self.btn.sizeHint())
-        # self.btn.move(40, 150)
-        #
-        # self.LastVal = QLabel("Last Value: " ,self)
-        # self.LastVal.move(130, 160)
-        # self.LastVal.adjustSize()
+        self.btn = QPushButton('Button', self)
+        self.btn.resize(self.btn.sizeHint())
+        self.btn.move(40, 150)
+
+        self.LastVal = QLabel(" ",self)
+        self.LastVal.move(130, 160)
+        self.LastVal.adjustSize()
 
         self.setGeometry(300, 300, 600, 400)
         self.setWindowTitle('QComboBox')
         self.show()
 
     def base_change_name(self):
-
+        last_val_finder()
+        global base
+        base = self.BaseCombo.currentText()
+        print(market)
+        self.LastVal.setText("1 " + market + " = " + str(last_val) + base)
+        self.LastVal.adjustSize()
 
     def market_change_name(self):
-
+        last_val_finder()
+        global market
+        market = self.MarketCombo.currentText()
+        print(base)
+        self.LastVal.setText("1 " + market + " = " + str(last_val) + base)
+        self.LastVal.adjustSize()
 
     # def closeEvent(self, event):
     #

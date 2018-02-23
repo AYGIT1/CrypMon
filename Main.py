@@ -29,8 +29,10 @@ def last_val_finder():
     values = requests.get("https://bittrex.com/api/v1.1/public/getmarketsummaries")
     for data_Markets in values.json()["result"]:
         if data_Markets['MarketName'] == base + "-" + market:
+            print("start")
             print(base + "-" + market)
             print(data_Markets["Last"])
+            print("end")
             global last_val
             last_val = float(data_Markets["Last"])
 
@@ -50,7 +52,7 @@ class AppMain(QWidget):
             self.BaseCombo.addItem(Code)
         self.BasLbl.move(40, 25)
         self.BaseCombo.move(40, 50)
-        self.BaseCombo.currentTextChanged.connect(self.base_change_name)
+        self.BaseCombo.currentTextChanged.connect(self.curr_change_name)
 
         # Market Currency Menu #######
         self.MarLbl = QLabel("Select a market currency", self)
@@ -60,8 +62,9 @@ class AppMain(QWidget):
             self.MarketCombo.addItem(Code)
         self.MarLbl.move(180, 25)
         self.MarketCombo.move(180, 50)
-        self.MarketCombo.currentTextChanged.connect(self.market_change_name)
+        self.MarketCombo.currentTextChanged.connect(self.curr_change_name)
 
+        # Button #
         self.btn = QPushButton('Button', self)
         self.btn.resize(self.btn.sizeHint())
         self.btn.move(40, 150)
@@ -74,20 +77,12 @@ class AppMain(QWidget):
         self.setWindowTitle('QComboBox')
         self.show()
 
-    def base_change_name(self):
+    def curr_change_name(self):
         last_val_finder()
-        global base
+        global base, market
         base = self.BaseCombo.currentText()
-        print(market)
-        self.LastVal.setText("1 " + market + " = " + str(last_val) + base)
-        self.LastVal.adjustSize()
-
-    def market_change_name(self):
-        last_val_finder()
-        global market
         market = self.MarketCombo.currentText()
-        print(base)
-        self.LastVal.setText("1 " + market + " = " + str(last_val) + base)
+        self.LastVal.setText("1 " + market + " = " + str(last_val) + " " + base)
         self.LastVal.adjustSize()
 
     # def closeEvent(self, event):

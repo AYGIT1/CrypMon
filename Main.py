@@ -102,7 +102,7 @@ class AppMain(QWidget):
             if data_Markets['MarketName'] == base + "-" + market:
                 print("asdf")
                 last = data_Markets["Last"]
-                self.LastVal.setText("1 " + market + " = " + last + " " + base)
+                self.LastVal.setText("1 " + market + " = " + last + " " + base) #ERROR is here
                 self.LastVal.adjustSize()
 
     # def curr_change_name(self):

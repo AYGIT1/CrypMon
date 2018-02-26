@@ -5,68 +5,57 @@
 
 import sys
 import requests
+import matplotlib.pyplot as plt
 from PyQt5.QtWidgets import (QWidget, QLabel, QComboBox, QApplication, QPushButton, QMessageBox)
 
 base_curr_set = set()
 market_curr_set = set()
-base = "-"
-market = "-"
-last_val = 1.00000
-
-
 # TODO: Do not use global variables
 
 
+def data_pull():
+    data_raw = requests.get("https://bittrex.com/api/v1.1/public/getmarkets")
+    for Shovel in data_raw.json()["result"]:
+        base_curr_set.add(Shovel["BaseCurrency"])
+        market_curr_set.add(Shovel["MarketCurrency"])
+
+
+def fetch_data(base, market):
+    global history
+    temp_data_time = []
+    temp_data_price = []
+    data_history = requests.get("https://bittrex.com/api/v1.1/public/getmarkethistory?market="+base+"-"+market)
+    for time_price in data_history.json()["result"]:
+        temp_data_time.append(time_price["TimeStamp"]) #TODO: convert to datetime
+        temp_data_price.append(time_price["Price"]) #TODO: convert to float
+    history = [temp_data_time, temp_data_price]
+
+
+def update_data(base, market):
+    currency_rates = base+"-"+market
+    currency_rates = currency_rates.upper()
+    data_raw = requests.get("https://bittrex.com/api/v1.1/public/getmarketsummaries")
+    for data_market_sum in data_raw.json()["result"]:
+        if data_market_sum['MarketName'] == currency_rates:
+            history[0].insert(0, data_market_sum["TimeStamp"])
+            history[1].insert(0, data_market_sum["Last"])
+    return history
 
 
 class AppMain(QWidget):
 
-    def data_pull():
-        try:
-            data_raw = requests.get("https://bittrex.com/api/v1.1/public/getmarkets")
-        except:
-            print("Connection to the server could not be established.")
-
-        for Shovel in data_raw.json()["result"]:
-            base_curr_set.add(Shovel["BaseCurrency"])
-            market_curr_set.add(Shovel["MarketCurrency"])
-
-    data_pull()
-
-    def fetch_data(base, market):
-        global history
-        temp_data_time = []
-        temp_data_price = []
-        data_history = requests.get(
-            "https://bittrex.com/api/v1.1/public/getmarkethistory?market=" + base + "-" + market)
-        print(data_history.json()["result"])
-        for time_price in data_history.json()["result"]:
-            temp_data_time.append(time_price["TimeStamp"])  # TODO: convert to time
-            temp_data_price.append(time_price["Price"])  # TODO: convert to float
-        history = [temp_data_time, temp_data_price]
-
-    def update_data(base, market):
-        currency_rates = base + "-" + market
-        currency_rates = currency_rates.upper()
-        data_raw = requests.get("https://bittrex.com/api/v1.1/public/getmarketsummaries")
-        for data_market_sum in data_raw.json()["result"]:
-            if data_market_sum['MarketName'] == currency_rates:
-                history[0].insert(0, data_market_sum["TimeStamp"])
-                history[1].insert(0, data_market_sum["Last"])
-        return history
-
-    def last_val_finder():
-        values = requests.get("https://bittrex.com/api/v1.1/public/getmarketsummaries")
-        for data_Markets in values.json()["result"]:
-            if data_Markets['MarketName'] == base + "-" + market:
-                global last_val
-                last_val = float(data_Markets["Last"])
+    base = "str"
+    market = "str"
 
     def __init__(self):
         super().__init__()
         self.initUI()
 
+
     def initUI(self):
+
+        base = "str"
+        market = "str"
 
         # Base Currency Menu #######
         self.BasLbl = QLabel("Select a base currency", self)
@@ -76,7 +65,7 @@ class AppMain(QWidget):
             self.BaseCombo.addItem(Code)
         self.BasLbl.move(40, 25)
         self.BaseCombo.move(40, 50)
-        self.BaseCombo.currentTextChanged.connect(self.curr_change_name)
+        self.BaseCombo.currentTextChanged.connect(lambda: self.combo_handle())
 
         # Market Currency Menu #######
         self.MarLbl = QLabel("Select a market currency", self)
@@ -86,7 +75,7 @@ class AppMain(QWidget):
             self.MarketCombo.addItem(Code)
         self.MarLbl.move(180, 25)
         self.MarketCombo.move(180, 50)
-        self.MarketCombo.currentTextChanged.connect(self.curr_change_name)
+        self.MarketCombo.currentTextChanged.connect(lambda: self.combo_handle())
 
         # Button #
         self.btn = QPushButton('Graph', self)
@@ -94,7 +83,7 @@ class AppMain(QWidget):
         self.btn.resize(self.btn.sizeHint())
         self.btn.move(40, 150)
 
-        self.LastVal = QLabel(" ", self)
+        self.LastVal = QLabel("l ", self)
         self.LastVal.move(130, 160)
         self.LastVal.adjustSize()
 
@@ -102,13 +91,27 @@ class AppMain(QWidget):
         self.setWindowTitle('CryptoCurrencyMonitor')
         self.show()
 
-    def curr_change_name(self):
-        # last_val_finder()
-        global base, market
-        base = self.BaseCombo.currentText()
-        market = self.MarketCombo.currentText()
-        # self.LastVal.setText("1 " + market + " = " + str(last_val) + " " + base)
-        # self.LastVal.adjustSize()
+    def combo_handle(self):
+        self.base = self.BaseCombo.currentText()
+        self.market = self.MarketCombo.currentText()
+        self.last_val_finder(self.base, self.market)
+
+    def last_val_finder(self, base, market):
+        values = requests.get("https://bittrex.com/api/v1.1/public/getmarketsummaries")
+        for data_Markets in values.json()["result"]:
+            if data_Markets['MarketName'] == base + "-" + market:
+                print("asdf")
+                last = data_Markets["Last"]
+                self.LastVal.setText("1 " + market + " = " + last + " " + base)
+                self.LastVal.adjustSize()
+
+    # def curr_change_name(self):
+    #     last_val_finder()
+    #     global base, market
+    #     base = self.BaseCombo.currentText()
+    #     market = self.MarketCombo.currentText()
+    #     self.LastVal.setText("1 " + market + " = " + str(last_val) + " " + base)
+    #     self.LastVal.adjustSize()
 
     def closeEvent(self, event):
 
@@ -119,9 +122,10 @@ class AppMain(QWidget):
             event.accept()
         else:
             event.ignore()
-
+            
 
 if __name__ == '__main__':
+    data_pull()
     app = QApplication(sys.argv)
     ex = AppMain()
     sys.exit(app.exec_())
